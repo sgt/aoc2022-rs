@@ -46,7 +46,20 @@ pub fn solution1(data: &[String]) -> i32 {
 }
 
 pub fn solution2(data: &[String]) -> i32 {
-    0
+    // to hell with that
+    data.chunks(3)
+        .map(|x| {
+            let sets: Vec<HashSet<u8>> = x.iter().map(|i| Backpack::str2items(i)).collect();
+            let s1 = sets.get(0).unwrap();
+            let s2 = sets.get(1).unwrap();
+            let s3 = sets.get(2).unwrap();
+            Backpack {
+                c1: s1.intersection(s2).copied().collect(),
+                c2: s3.clone(),
+            }
+        })
+        .map(|x| x.total_common_priorities())
+        .sum()
 }
 
 #[cfg(test)]
@@ -68,7 +81,7 @@ mod tests {
     fn test_solution1() {
         assert_eq!(157, day3::solution1(&data()));
     }
-    
+
     #[test]
     fn test_solution2() {
         assert_eq!(70, day3::solution2(&data()));
