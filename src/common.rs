@@ -34,5 +34,5 @@ pub(crate) fn int_groups_data(data: &[String]) -> Vec<Vec<i32>> {
 
 #[cfg(test)]
 pub(crate) fn str2lines(s: &str) -> Vec<String> {
-    s.lines().map(|x| x.trim().into()).collect()
+    s.lines().map(|x| x.into()).collect()
 }

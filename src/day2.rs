@@ -139,8 +139,8 @@ mod tests {
     fn data() -> Vec<String> {
         str2lines(
             r#"A Y
-       B X
-       C Z"#,
+B X
+C Z"#,
         )
     }
 

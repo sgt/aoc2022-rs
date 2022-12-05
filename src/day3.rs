@@ -69,11 +69,11 @@ mod tests {
     fn data() -> Vec<String> {
         str2lines(
             r#"vJrwpWtwJgWrhcsFMMfFFhFp
-    jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
-    PmmdzqPrVvPwwTWBwg
-    wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
-    ttgJtRGJQctTZtZT
-    CrZsJsPPZsGzwwsLwLmpwMDw"#,
+jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+PmmdzqPrVvPwwTWBwg
+wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+ttgJtRGJQctTZtZT
+CrZsJsPPZsGzwwsLwLmpwMDw"#,
         )
     }
 

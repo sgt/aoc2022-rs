@@ -1,6 +1,6 @@
 use crate::common::int_groups_data;
 
-fn elf_totals(data:&[String]) -> Vec<i32> {
+fn elf_totals(data: &[String]) -> Vec<i32> {
     let groups = int_groups_data(data);
     groups.iter().map(|v| v.iter().sum()).collect()
 }
@@ -24,19 +24,19 @@ mod tests {
     fn data() -> Vec<String> {
         str2lines(
             r#"1000
-        2000
-        3000
-        
-        4000
-        
-        5000
-        6000
-        
-        7000
-        8000
-        9000
-        
-        10000"#,
+2000
+3000
+
+4000
+
+5000
+6000
+
+7000
+8000
+9000
+
+10000"#,
         )
     }
 

@@ -30,18 +30,18 @@ impl Assignment {
     }
 }
 
-pub fn solution1(data: &[String]) -> i32 {
+pub fn solution1(data: &[String]) -> usize {
     data.iter()
         .map(|x| Assignment::parse(x))
         .filter(|x| x.has_full_overlap())
-        .count() as i32
+        .count()
 }
 
-pub fn solution2(data: &[String]) -> i32 {
+pub fn solution2(data: &[String]) -> usize {
     data.iter()
         .map(|x| Assignment::parse(x))
         .filter(|x| x.has_overlap())
-        .count() as i32
+        .count()
 }
 
 #[cfg(test)]
@@ -51,11 +51,11 @@ mod tests {
     fn data() -> Vec<String> {
         str2lines(
             r#"2-4,6-8
-        2-3,4-5
-        5-7,7-9
-        2-8,3-7
-        6-6,4-6
-        2-6,4-8"#,
+2-3,4-5
+5-7,7-9
+2-8,3-7
+6-6,4-6
+2-6,4-8"#,
         )
     }
 
