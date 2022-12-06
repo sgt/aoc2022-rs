@@ -1,7 +1,8 @@
 use clap::{command, Parser};
-use common::Solution;
+use solution::Solution;
 
 mod common;
+mod solution;
 mod day1;
 mod day2;
 mod day3;
