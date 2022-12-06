@@ -7,6 +7,7 @@ mod day2;
 mod day3;
 mod day4;
 mod day5;
+mod day6;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -39,6 +40,8 @@ fn main() {
         Args { day: 4, part: 2 } => day4::solution2(&input).to_string(),
         Args { day: 5, part: 1 } => day5::solution1(&input),
         Args { day: 5, part: 2 } => day5::solution2(&input),
+        Args { day: 6, part: 1 } => day6::solution1(&input).to_string(),
+        Args { day: 6, part: 2 } => day6::solution2(&input).to_string(),
         _ => unimplemented!("this solution does not exist yet"),
     };
     println!("{}", solution);
