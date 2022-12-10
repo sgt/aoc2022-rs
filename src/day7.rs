@@ -12,6 +12,7 @@ type DirWeak = Weak<RefCell<Dir>>;
 
 // I know this solution is silly, but my main goal was to struggle with
 // Rust's borrow machinery, not solving the bloody problem.
+// Not sure I'm using Rc<> here as God intended.
 
 #[derive(Debug)]
 struct Dir {
@@ -92,14 +93,26 @@ fn all_dirs(dir: DirLink) -> Vec<DirLink> {
 
 pub fn solution1(data: &[String]) -> usize {
     let root = parse(data);
-    // for d in all_dirs(dir)
-    println!("{:?}", root);
-    println!("{:?}", total_size(root));
-    todo!()
+    all_dirs(root)
+        .iter()
+        .map(|x| total_size(Rc::clone(x)))
+        .filter(|x| *x <= 100_000)
+        .sum()
 }
 
 pub fn solution2(data: &[String]) -> usize {
-    todo!()
+    let root = parse(data);
+    let dir_sizes: Vec<_> = all_dirs(root)
+        .iter()
+        .map(|x| total_size(Rc::clone(x)))
+        .collect();
+    let target_space = 70_000_000 - 30_000_000;
+    let amount_to_remove = dir_sizes.iter().max().unwrap() - target_space;
+    *dir_sizes
+        .iter()
+        .filter(|x| **x >= amount_to_remove)
+        .min()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -137,5 +150,10 @@ $ ls
     #[test]
     fn test_solution1() {
         assert_eq!(95437, day7::solution1(&data()))
+    }
+
+    #[test]
+    fn test_solution2() {
+        assert_eq!(24933642, day7::solution2(&data()))
     }
 }
