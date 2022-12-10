@@ -16,6 +16,7 @@ type DirWeak = Weak<RefCell<Dir>>;
 
 #[derive(Debug)]
 struct Dir {
+    #[allow(dead_code)]
     name: String,
     parent: Option<DirWeak>,
     files: HashMap<String, usize>,

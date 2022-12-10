@@ -7,47 +7,49 @@ fn parse(data: &[String]) -> Vec<Vec<u8>> {
 }
 
 /// Returns vector index after which it stops being monotonously increasing.
-fn mono_inc_until<T: PartialOrd>(arr: &[T]) -> usize {
+fn visible_from_left<T: PartialOrd>(arr: &[T]) -> HashSet<usize> {
     // panics if v is empty but we don't care
-    let mut idx = 0;
-    let mut prev = &arr[0];
-    for i in &arr[1..] {
-        if i <= prev {
-            return idx;
-        } else {
-            prev = i;
-            idx += 1;
+    let mut max = &arr[0];
+    let mut result = HashSet::from([0]);
+    for (i, el) in arr.iter().enumerate().skip(1) {
+        if el > max {
+            max = el;
+            result.insert(i);
         }
     }
-    idx
+    result
 }
 
 /// Check visibility for both sides of a tree row.
-fn visible_boundaries<T: PartialOrd>(arr: &[T]) -> (usize, usize) {
-    let reversed: Vec<&T> = arr.iter().rev().collect();
-    (
-        mono_inc_until(arr),
-        arr.len() - mono_inc_until(&reversed) - 1,
-    )
+fn visible_left_and_right<T: PartialOrd + Copy>(arr: &[T]) -> HashSet<usize> {
+    let left = visible_from_left(arr);
+    let reversed: Vec<_> = arr.iter().rev().collect();
+    let right = visible_from_left(&reversed)
+        .iter()
+        .map(|x| arr.len() - x - 1)
+        .collect();
+    left.union(&right).copied().collect()
 }
 
 pub fn solution1(data: &[String]) -> usize {
     let input = parse(data);
-    let mut visible_trees = HashSet::new();
+    let mut result = HashSet::new();
 
     for (j, line) in input.iter().enumerate() {
-        let (i1, i2) = visible_boundaries(line);
-        visible_trees.insert((i1, j));
-        visible_trees.insert((i2, j));
+        let coords = visible_left_and_right(line);
+        for x in coords {
+            result.insert((x, j));
+        }
     }
 
     for (i, row) in transpose(&input).iter().enumerate() {
-        let (j1, j2) = visible_boundaries(row);
-        visible_trees.insert((i, j1));
-        visible_trees.insert((i, j2));
+        let coords = visible_left_and_right(row);
+        for x in coords {
+            result.insert((i, x));
+        }
     }
 
-    visible_trees.len()
+    result.len()
 }
 
 pub fn solution2(data: &[String]) -> usize {
@@ -56,6 +58,8 @@ pub fn solution2(data: &[String]) -> usize {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use crate::{common::str2lines, day8};
 
     fn data() -> Vec<String> {
@@ -70,13 +74,16 @@ mod tests {
 
     #[test]
     fn test_visible_boundaries() {
-        assert_eq!((0, 0), day8::visible_boundaries(&b"5".to_vec()));
-        assert_eq!((0, 2), day8::visible_boundaries(&b"515".to_vec()));
-        assert_eq!((1, 3), day8::visible_boundaries(&b"35390".to_vec()));
-        assert_eq!((0, 4), day8::visible_boundaries(&b"33549".to_vec()));
-        assert_eq!((0, 3), day8::visible_boundaries(&b"65332".to_vec()));
+        assert_eq!(HashSet::from([0]), day8::visible_left_and_right(b"5"));
+        assert_eq!(HashSet::from([0, 2]), day8::visible_left_and_right(b"515"));
+        assert_eq!(
+            HashSet::from([0, 1, 2, 4]),
+            day8::visible_left_and_right(b"25512")
+        );
     }
 
     #[test]
-    fn test_solution1() {}
+    fn test_solution1() {
+        assert_eq!(21, day8::solution1(&data()));
+    }
 }

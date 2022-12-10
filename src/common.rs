@@ -19,8 +19,8 @@ pub(crate) fn transpose<T: Copy>(v: &[Vec<T>]) -> Vec<Vec<T>> {
         let mut result = vec![];
         for i in 0..l1.len() {
             let mut line = vec![];
-            for j in 0..v.len() {
-                line.push(v[j][i]);
+            for l in v {
+                line.push(l[i]);
             }
             result.push(line);
         }
