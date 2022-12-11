@@ -45,22 +45,30 @@ fn parse(data: &[String]) -> Vec<Command> {
         .collect()
 }
 
-fn tail_visited(commands: &[Command]) -> HashSet<Coords> {
-    let mut h = Coords(0, 0);
-    let mut t = Coords(0, 0);
-    let mut result = HashSet::from_iter(vec![t]);
+fn tail_visited<const N: usize>(commands: &[Command]) -> HashSet<Coords> {
+    let mut rope = [Coords(0, 0); N];
+    let mut result = HashSet::new();
     for cmd in commands {
         // moving head all the way and then tracing step by step also works
         // but let's do both step by step anyway
         for _ in 0..cmd.1.abs() {
-            h.step(cmd);
-            t.move_tail(&h);
-            result.insert(t);
+            for i in 0..rope.len() {
+                if i == 0 {
+                    rope[i].step(cmd);
+                } else {
+                    let prev = rope[i-1];
+                    rope[i].move_tail(&prev);
+                }
+                if i == rope.len() - 1 {
+                    result.insert(rope[i]);
+                }
+            }
         }
     }
     result
 }
 
+#[allow(dead_code)]
 fn draw(data: &HashSet<Coords>) -> Vec<String> {
     let mut result = vec![];
     let min_x = data.iter().map(|x| x.0).min().unwrap();
@@ -84,12 +92,14 @@ fn draw(data: &HashSet<Coords>) -> Vec<String> {
 
 pub fn solution1(data: &[String]) -> usize {
     let commands = parse(data);
-    let data = tail_visited(&commands);
+    let data = tail_visited::<2>(&commands);
     data.len()
 }
 
 pub fn solution2(data: &[String]) -> usize {
-    todo!()
+    let commands = parse(data);
+    let data = tail_visited::<10>(&commands);
+    data.len()
 }
 
 #[cfg(test)]
@@ -111,15 +121,25 @@ R 2"#,
 
     fn data2() -> Vec<String> {
         str2lines(
-            r#"D 20
-R 20
-U 20
-R 2"#,
+            r#"R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20"#,
         )
     }
+
     #[test]
     fn test_solution1() {
         assert_eq!(13, day9::solution1(&data()));
-        assert_eq!(59, day9::solution1(&data2()));
+    }
+
+    #[test]
+    fn test_solution2() {
+        assert_eq!(1, day9::solution2(&data()));
+        assert_eq!(36, day9::solution2(&data2()));
     }
 }

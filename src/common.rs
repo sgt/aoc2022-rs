@@ -10,7 +10,7 @@ pub(crate) fn int_groups_data(data: &[String]) -> Vec<Vec<i32>> {
 
 #[cfg(test)]
 pub(crate) fn str2lines(s: &str) -> Vec<String> {
-    s.lines().map(|x| x.into()).collect()
+    s.lines().map(String::from).collect()
 }
 
 pub(crate) fn transpose<T>(v: &[Vec<T>]) -> Vec<Vec<&T>> {
