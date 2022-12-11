@@ -13,14 +13,14 @@ pub(crate) fn str2lines(s: &str) -> Vec<String> {
     s.lines().map(|x| x.into()).collect()
 }
 
-pub(crate) fn transpose<T: Copy>(v: &[Vec<T>]) -> Vec<Vec<T>> {
+pub(crate) fn transpose<T>(v: &[Vec<T>]) -> Vec<Vec<&T>> {
     // panics if the vec is not square but who cares
     if let Some(l1) = v.first() {
         let mut result = vec![];
         for i in 0..l1.len() {
             let mut line = vec![];
             for l in v {
-                line.push(l[i]);
+                line.push(&l[i]);
             }
             result.push(line);
         }
@@ -37,7 +37,7 @@ mod tests {
     #[test]
     fn test_transpose() {
         let x = vec![vec![1, 2, 3], vec![4, 5, 6]];
-        let xt = vec![vec![1, 4], vec![2, 5], vec![3, 6]];
+        let xt = vec![vec![&1, &4], vec![&2, &5], vec![&3, &6]];
         assert_eq!(xt, transpose(&x));
     }
 }
