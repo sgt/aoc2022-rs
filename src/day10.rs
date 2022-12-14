@@ -60,6 +60,11 @@ impl Device {
         }
         self.cycle * reg
     }
+
+    fn is_pixel_drawn(&self) -> bool {
+        let x_pos = self.cycle % 40;
+        (x_pos - self.reg_x).abs() <= 1
+    }
 }
 
 fn parse(data: &[String]) -> Vec<Op> {
@@ -86,7 +91,24 @@ pub fn solution1(data: &[String]) -> i32 {
 }
 
 pub fn solution2(data: &[String]) -> String {
-    todo!()
+    let program = parse(data);
+    let mut device = Device::new(&program);
+    (0..240)
+        .into_iter()
+        .map(|_| {
+            let result = if device.is_pixel_drawn() {
+                '#'
+            } else {
+                '.'
+            };
+            device.step();
+            result
+        })
+        .collect::<Vec<char>>()
+        .chunks(40)
+        .map(|arr| arr.iter().collect::<String>())
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 #[cfg(test)]
