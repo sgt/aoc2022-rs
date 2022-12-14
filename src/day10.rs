@@ -37,7 +37,8 @@ impl Device {
         self.program[self.pc]
     }
 
-    fn step(&mut self) {
+    fn step(&mut self) -> i32 {
+        let result = self.reg_x;
         self.cycle += 1;
         self.cycle_on_op += 1;
         if self.cycle_on_op == self.op().cycles() {
@@ -48,17 +49,16 @@ impl Device {
             self.cycle_on_op = 0;
             self.pc += 1;
         }
+        result
     }
 
     fn run(&mut self, cycles: usize) -> i32 {
         // silly 1-off fix
-        for _ in 0..cycles-1 {
-            self.step();
+        let mut reg = self.reg_x;
+        for _ in 0..cycles {
+            reg = self.step();
         }
-        let result = (self.cycle+1) * self.reg_x;
-        // eprintln!("{} * {} = {}", self.cycle+1, self.reg_x, result);
-        self.step();
-        result
+        self.cycle * reg
     }
 }
 
@@ -260,7 +260,7 @@ noop"#,
     fn test_small_example() {
         let program = parse(&data());
         let mut device = Device::new(&program);
-        assert_eq!(5*4, device.run(5));
+        assert_eq!(5 * 4, device.run(5));
     }
 
     #[test]
