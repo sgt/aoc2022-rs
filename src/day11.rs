@@ -1,10 +1,11 @@
+use gcd::Gcd;
 use lazy_static::lazy_static;
 use regex::Regex;
 
 #[derive(Debug, PartialEq)]
 enum WorryParam {
     Old,
-    Num(i32),
+    Num(u64),
 }
 
 #[derive(Debug, PartialEq)]
@@ -14,14 +15,21 @@ enum WorryOp {
 }
 
 #[derive(Debug)]
-struct Monkey {
-    items: Vec<i32>,
-    worry_params: (WorryParam, WorryOp, WorryParam),
-    /// (divisible_by, if_true, if_false)
-    throw_params: (i32, usize, usize),
+struct ThrowPlan {
+    divisor: u64,
+    if_true: usize,
+    if_false: usize,
 }
 
-impl Monkey {
+#[derive(Debug)]
+struct Monkey<const V: u64> {
+    items: Vec<u64>,
+    worry_plan: (WorryParam, WorryOp, WorryParam),
+    /// (divisible_by, if_true, if_false)
+    throw_plan: ThrowPlan,
+}
+
+impl<const V: u64> Monkey<V> {
     fn parse(data: &[String]) -> (usize, Self) {
         lazy_static! {
             static ref RE_MONKEY: Regex = Regex::new(r"Monkey (\d+):").unwrap();
@@ -33,7 +41,7 @@ impl Monkey {
                 Regex::new(r"If (true|false): throw to monkey (\d+)").unwrap();
         }
         let idx: usize = RE_MONKEY.captures(&data[0]).unwrap()[1].parse().unwrap();
-        let items: Vec<i32> = RE_ITEMS.captures(&data[1]).unwrap()[1]
+        let items: Vec<u64> = RE_ITEMS.captures(&data[1]).unwrap()[1]
             .split(", ")
             .map(|x| x.parse().unwrap())
             .collect();
@@ -43,19 +51,23 @@ impl Monkey {
             Self::parse_worry_op(&op_caps[2]),
             Self::parse_worry_param(&op_caps[3]),
         );
-        let test_param: i32 = RE_TEST.captures(&data[3]).unwrap()[1].parse().unwrap();
-        let test_true: usize = RE_TEST_CLAUSE.captures(&data[4]).unwrap()[2]
+        let divisible_by: u64 = RE_TEST.captures(&data[3]).unwrap()[1].parse().unwrap();
+        let if_true: usize = RE_TEST_CLAUSE.captures(&data[4]).unwrap()[2]
             .parse()
             .unwrap();
-        let test_false: usize = RE_TEST_CLAUSE.captures(&data[5]).unwrap()[2]
+        let if_false: usize = RE_TEST_CLAUSE.captures(&data[5]).unwrap()[2]
             .parse()
             .unwrap();
         (
             idx,
             Monkey {
                 items,
-                worry_params,
-                throw_params: (test_param, test_true, test_false),
+                worry_plan: worry_params,
+                throw_plan: ThrowPlan {
+                    divisor: divisible_by,
+                    if_true,
+                    if_false,
+                },
             },
         )
     }
@@ -75,76 +87,92 @@ impl Monkey {
         }
     }
 
-    fn worry_op(&self, old: i32) -> i32 {
-        let v1 = match self.worry_params.0 {
+    fn worry_op(&self, old: u64, divisors_lcm: u64) -> u64 {
+        let v1 = match self.worry_plan.0 {
             WorryParam::Num(x) => x,
             WorryParam::Old => old,
         };
-        let v2 = match self.worry_params.2 {
+        let v2 = match self.worry_plan.2 {
             WorryParam::Num(x) => x,
             WorryParam::Old => old,
         };
-        let result = match self.worry_params.1 {
+        let result = match self.worry_plan.1 {
             WorryOp::Add => v1 + v2,
             WorryOp::Mul => v1 * v2,
         };
-        result / 3
+        match V {
+            1 => result / 3,
+            2 => result % divisors_lcm,
+            _ => panic!("unknown version"),
+        }
     }
 
-    fn throw_op(&self, n: i32) -> usize {
-        if n % self.throw_params.0 == 0 {
-            self.throw_params.1
+    fn throw_op(&self, n: u64) -> usize {
+        if n % self.throw_plan.divisor == 0 {
+            self.throw_plan.if_true
         } else {
-            self.throw_params.2
+            self.throw_plan.if_false
         }
     }
 
     /// Return a list of (monkey_idx, item_to_throw).
-    fn turn_results(&self) -> Vec<(usize, i32)> {
+    fn turn_results(&self, divisors_lcm: u64) -> Vec<(usize, u64)> {
         self.items
             .iter()
-            .map(|x| self.worry_op(*x))
+            .map(|x| self.worry_op(*x, divisors_lcm))
             .map(|x| (self.throw_op(x), x))
             .collect()
     }
 }
 
 #[derive(Debug)]
-struct Monkeys(Vec<Monkey>);
+struct Monkeys<const V: u64> {
+    v: Vec<Monkey<V>>,
+    divisors_lcm: u64,
+}
 
-impl Monkeys {
+impl<const V: u64> Monkeys<V> {
+    fn new(v: Vec<Monkey<V>>) -> Self {
+        let divisors_lcm = v
+            .iter()
+            .map(|x| x.throw_plan.divisor)
+            .reduce(|acc, x| (acc*x)/acc.gcd(x))
+            .unwrap();
+        Self { v, divisors_lcm }
+    }
+
     /// Runs a turn and return number of items inspected.
     fn turn(&mut self, idx: usize) -> usize {
-        let result = self.0[idx].items.len();
-        let tr = self.0[idx].turn_results();
-        self.0[idx].items.clear();
+        let result = self.v[idx].items.len();
+        let tr = self.v[idx].turn_results(self.divisors_lcm);
+        self.v[idx].items.clear();
         for (i, item) in tr {
-            self.0[i].items.push(item);
+            self.v[i].items.push(item);
         }
         result
     }
 
     /// Return number of items inspected for each monkey.
     fn round(&mut self) -> Vec<usize> {
-        (0..self.0.len()).map(|i| self.turn(i)).collect()
+        (0..self.v.len()).map(|i| self.turn(i)).collect()
     }
 }
 
-fn parse(input: &[String]) -> Monkeys {
+fn parse<const V: u64>(input: &[String]) -> Monkeys<V> {
     let monkey_data: Vec<_> = input.split(|x| x.is_empty()).collect();
     let mut result = Vec::with_capacity(monkey_data.len());
     for md in monkey_data {
         let (idx, monkey) = Monkey::parse(md);
         result.insert(idx, monkey);
     }
-    Monkeys(result)
+    Monkeys::new(result)
 }
 
-pub fn solution1(data: &[String]) -> usize {
-    let mut monkeys = parse(data);
-    let mut result = vec![0; monkeys.0.len()];
+pub fn solution<const V: u64>(data: &[String], rounds: usize) -> usize {
+    let mut monkeys: Monkeys<V> = parse(data);
+    let mut result = vec![0; monkeys.v.len()];
 
-    for _ in 0.. 20{
+    for _ in 0..rounds {
         result = result
             .iter()
             .zip(monkeys.round())
@@ -157,9 +185,12 @@ pub fn solution1(data: &[String]) -> usize {
     result[0] * result[1]
 }
 
+pub fn solution1(data: &[String]) -> usize {
+    solution::<1>(data, 20)
+}
+
 pub fn solution2(data: &[String]) -> usize {
-    let input = parse(data);
-    todo!()
+    solution::<2>(data, 10_000)
 }
 
 #[cfg(test)]
@@ -197,8 +228,14 @@ Monkey 3:
     If false: throw to monkey 1"#,
         )
     }
+
     #[test]
     fn test_solution1() {
         assert_eq!(10605, day11::solution1(&data()));
+    }
+
+    #[test]
+    fn test_solution2() {
+        assert_eq!(2713310158, day11::solution2(&data()));
     }
 }
