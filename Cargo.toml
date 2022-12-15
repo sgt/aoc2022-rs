@@ -10,6 +10,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.0.29", features = ["derive"] }
 gcd = "2.2.0"
+json = "0.12.4"
 lazy_static = "1.4.0"
 pathfinding = "4.1.1"
 regex = "1.7.0"

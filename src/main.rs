@@ -15,6 +15,7 @@ mod day9;
 mod day10;
 mod day11;
 mod day12;
+mod day13;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
