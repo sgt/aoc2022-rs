@@ -24,14 +24,16 @@ impl Line {
     }
 }
 
+#[derive(Debug)]
 struct Grid {
     rock: HashSet<Pos>,
     sand: HashSet<Pos>,
     max_depth: usize,
+    solid_bottom: Option<usize>,
 }
 
 impl Grid {
-    fn new(data: &[Line]) -> Self {
+    fn new(data: &[Line], solid_bottom_offset: Option<usize>) -> Self {
         let mut rock = HashSet::new();
         for line in data {
             rock.extend(line.positions());
@@ -41,17 +43,26 @@ impl Grid {
             rock,
             sand: HashSet::new(),
             max_depth,
+            solid_bottom: solid_bottom_offset.map(|x| max_depth + x),
         }
     }
 
     fn is_taken(&self, pos: &Pos) -> bool {
-        self.rock.contains(pos) || self.sand.contains(pos)
+        self.rock.contains(pos) || self.sand.contains(pos) || self.solid_bottom == Some(pos.1)
+    }
+
+    fn is_in_abyss(&self, pos: &Pos) -> bool {
+        let limit = match self.solid_bottom {
+            Some(x) => x,
+            None => self.max_depth,
+        };
+        pos.1 >= limit
     }
 
     /// Calculates where sand will land without actually adding it to the grid. None = will fall off the grid.
     fn sand_land_position(&self, x: usize) -> Option<Pos> {
         let mut cur_pos = (x, 0);
-        'falling: while cur_pos.1 < self.max_depth {
+        'falling: while !self.is_in_abyss(&cur_pos) {
             for next_pos in [
                 (cur_pos.0, cur_pos.1 + 1),
                 (cur_pos.0 - 1, cur_pos.1 + 1),
@@ -87,15 +98,22 @@ fn parse(input: &[String]) -> Vec<Line> {
 }
 
 pub fn solution1(input: &[String]) -> usize {
-    let mut grid = Grid::new(&parse(input));
+    let mut grid = Grid::new(&parse(input), None);
     while let Some(pos) = grid.sand_land_position(500) {
         grid.sand.insert(pos);
     }
     grid.sand.len()
 }
 
-pub fn solution2(_input: &[String]) -> usize {
-    todo!()
+pub fn solution2(input: &[String]) -> usize {
+    let mut grid = Grid::new(&parse(input), Some(2));
+    while let Some(pos) = grid.sand_land_position(500) {
+        grid.sand.insert(pos);
+        if pos == (500, 0) {
+            break;
+        }
+    }
+    grid.sand.len()
 }
 
 #[cfg(test)]
@@ -116,6 +134,6 @@ mod tests {
 
     #[test]
     fn test_solution2() {
-        assert_eq!(0, day14::solution2(&data()));
+        assert_eq!(93, day14::solution2(&data()));
     }
 }
