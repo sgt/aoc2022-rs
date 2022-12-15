@@ -15,31 +15,26 @@ fn parse(data: &[String]) -> Vec<DataPair> {
         .collect()
 }
 
-fn compare(v1: &JsonValue, v2: &JsonValue) -> Option<bool> {
+fn compare(v1: &JsonValue, v2: &JsonValue) -> Ordering {
     if let (Some(i1), Some(i2)) = (v1.as_i32(), v2.as_i32()) {
-        match i1.cmp(&i2) {
-            Ordering::Less => Some(true),
-            Ordering::Greater => Some(false),
-            Ordering::Equal => None,
-        }
+        i1.cmp(&i2)
     } else if v1.is_array() && v2.is_array() {
         if v1.is_empty() && v2.is_empty() {
-            None
+            Ordering::Equal
         } else if v1.is_empty() && !v2.is_empty() {
-            Some(true)
+            Ordering::Less
         } else if !v1.is_empty() && v2.is_empty() {
-            Some(false)
+            Ordering::Greater
         } else {
-            let result = compare(&v1[0], &v2[0]);
-            if result.is_some() {
-                result
-            } else {
-                let (mut a1, mut a2) = (v1.clone(), v2.clone());
-                if let Some(r) = compare(&a1.array_remove(0), &a2.array_remove(0)) {
-                    Some(r)
-                } else {
-                    compare(&a1, &a2)
+            match compare(&v1[0], &v2[0]) {
+                Ordering::Equal => {
+                    let (mut a1, mut a2) = (v1.clone(), v2.clone());
+                    match compare(&a1.array_remove(0), &a2.array_remove(0)) {
+                        Ordering::Equal => compare(&a1,&a2),
+                        x => x,
+                    }
                 }
+                x => x,
             }
         }
     } else if v1.is_number() && v2.is_array() {
@@ -56,8 +51,8 @@ pub fn solution1(input: &[String]) -> usize {
         .iter()
         .map(|(a, b)| compare(a, b))
         .enumerate()
-        .filter(|(_, x)| *x==Some(true))
-        .map(|(i,_)|i+1)
+        .filter(|(_, x)| *x == Ordering::Less)
+        .map(|(i, _)| i + 1)
         .sum()
 }
 
