@@ -87,7 +87,7 @@ impl<const V: u64> Monkey<V> {
         }
     }
 
-    fn worry_op(&self, old: u64, divisors_lcm: u64) -> u64 {
+    fn worry_op(&self, old: u64) -> u64 {
         let v1 = match self.worry_plan.0 {
             WorryParam::Num(x) => x,
             WorryParam::Old => old,
@@ -102,7 +102,7 @@ impl<const V: u64> Monkey<V> {
         };
         match V {
             1 => result / 3,
-            2 => result % divisors_lcm,
+            2 => result,
             _ => panic!("unknown version"),
         }
     }
@@ -119,7 +119,7 @@ impl<const V: u64> Monkey<V> {
     fn turn_results(&self, divisors_lcm: u64) -> Vec<(usize, u64)> {
         self.items
             .iter()
-            .map(|x| self.worry_op(*x, divisors_lcm))
+            .map(|x| self.worry_op(*x % divisors_lcm))
             .map(|x| (self.throw_op(x), x))
             .collect()
     }
@@ -136,7 +136,7 @@ impl<const V: u64> Monkeys<V> {
         let divisors_lcm = v
             .iter()
             .map(|x| x.throw_plan.divisor)
-            .reduce(|acc, x| (acc*x)/acc.gcd(x))
+            .reduce(|acc, x| (acc * x) / acc.gcd(x))
             .unwrap();
         Self { v, divisors_lcm }
     }
