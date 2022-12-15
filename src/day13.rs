@@ -30,7 +30,7 @@ fn compare(v1: &JsonValue, v2: &JsonValue) -> Ordering {
                 Ordering::Equal => {
                     let (mut a1, mut a2) = (v1.clone(), v2.clone());
                     match compare(&a1.array_remove(0), &a2.array_remove(0)) {
-                        Ordering::Equal => compare(&a1,&a2),
+                        Ordering::Equal => compare(&a1, &a2),
                         x => x,
                     }
                 }
@@ -56,8 +56,19 @@ pub fn solution1(input: &[String]) -> usize {
         .sum()
 }
 
-pub fn solution2(_input: &[String]) -> usize {
-    todo!()
+pub fn solution2(input: &[String]) -> usize {
+    let mut data: Vec<_> = parse(input)
+        .iter()
+        .flat_map(|(a, b)| vec![a.clone(), b.clone()])
+        .collect();
+    let sep1 = json::parse("[[2]]").unwrap();
+    let sep2 = json::parse("[[6]]").unwrap();
+    data.push(sep1.clone());
+    data.push(sep2.clone());
+    data.sort_by(compare);
+    let pos1 = data.iter().position(|x| *x == sep1).unwrap();
+    let pos2 = data.iter().position(|x| *x == sep2).unwrap();
+    (pos1 + 1) * (pos2 + 1)
 }
 
 #[cfg(test)]
@@ -95,5 +106,10 @@ mod tests {
     #[test]
     fn test_solution1() {
         assert_eq!(13, day13::solution1(&data()));
+    }
+
+    #[test]
+    fn test_solution2() {
+        assert_eq!(140, day13::solution2(&data()));
     }
 }
