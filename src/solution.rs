@@ -13,6 +13,7 @@ use crate::day8;
 use crate::day9;
 use crate::day10;
 use crate::day11;
+use crate::day12;
 
 pub struct Solution {
     day: u8,
@@ -60,6 +61,8 @@ impl Solution {
             Self { day: 10, part: 2 } => day10::solution2(&input),
             Self { day: 11, part: 1 } => day11::solution1(&input).to_string(),
             Self { day: 11, part: 2 } => day11::solution2(&input).to_string(),
+            Self { day: 12, part: 1 } => day12::solution1(&input).to_string(),
+            Self { day: 12, part: 2 } => day12::solution2(&input).to_string(),
             _ => unimplemented!("this solution does not exist yet"),
         }
     }
