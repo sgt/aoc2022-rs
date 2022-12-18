@@ -3,6 +3,7 @@ use std::io::BufRead;
 use std::io::BufReader;
 
 use crate::day1;
+use crate::day15;
 use crate::day2;
 use crate::day3;
 use crate::day4;
@@ -69,6 +70,8 @@ impl Solution {
             Self { day: 13, part: 2 } => day13::solution2(&input).to_string(),
             Self { day: 14, part: 1 } => day14::solution1(&input).to_string(),
             Self { day: 14, part: 2 } => day14::solution2(&input).to_string(),
+            Self { day: 15, part: 1 } => day15::solution1(&input).to_string(),
+            Self { day: 15, part: 2 } => day15::solution2(&input).to_string(),
             _ => unimplemented!("this solution does not exist yet"),
         }
     }
