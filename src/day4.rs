@@ -33,14 +33,14 @@ impl Assignment {
 pub fn solution1(data: &[String]) -> usize {
     data.iter()
         .map(|x| Assignment::parse(x))
-        .filter(|x| x.has_full_overlap())
+        .filter(Assignment::has_full_overlap)
         .count()
 }
 
 pub fn solution2(data: &[String]) -> usize {
     data.iter()
         .map(|x| Assignment::parse(x))
-        .filter(|x| x.has_overlap())
+        .filter(Assignment::has_overlap)
         .count()
 }
 

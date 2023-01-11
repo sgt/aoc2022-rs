@@ -6,7 +6,7 @@ enum Shape {
 }
 
 impl Shape {
-    fn score(&self) -> i32 {
+    fn score(self) -> i32 {
         match self {
             Shape::Rock => 1,
             Shape::Paper => 2,
@@ -45,41 +45,41 @@ impl Instruction {
     fn parse1(s: &str) -> Self {
         let (opp, you) = Self::parse_letters(s);
         Instruction {
-            opp: Self::parse_opp_letter(&opp),
-            you: Self::parse_you_letter1(&you),
+            opp: Self::parse_opp_letter(opp),
+            you: Self::parse_you_letter1(you),
         }
     }
 
     fn parse2(s: &str) -> Self {
         let (opp, you) = Self::parse_letters(s);
-        let opp_shape = Self::parse_opp_letter(&opp);
+        let opp_shape = Self::parse_opp_letter(opp);
         Instruction {
             opp: opp_shape,
-            you: Self::parse_you_letter2(&you, &opp_shape),
+            you: Self::parse_you_letter2(you, opp_shape),
         }
     }
 
-    fn parse_opp_letter(c: &char) -> Shape {
+    fn parse_opp_letter(c: char) -> Shape {
         match c {
             'A' => Shape::Rock,
             'B' => Shape::Paper,
             'C' => Shape::Scissors,
-            _ => panic!("unknown letter {}", c),
+            _ => panic!("unknown letter {c}"),
         }
     }
 
-    fn parse_you_letter1(c: &char) -> Shape {
+    fn parse_you_letter1(c: char) -> Shape {
         match c {
             'X' => Shape::Rock,
             'Y' => Shape::Paper,
             'Z' => Shape::Scissors,
-            _ => panic!("unknown letter {}", c),
+            _ => panic!("unknown letter {c}"),
         }
     }
 
-    fn parse_you_letter2(c: &char, opp: &Shape) -> Shape {
+    fn parse_you_letter2(c: char, opp: Shape) -> Shape {
         match c {
-            'Y' => *opp,
+            'Y' => opp,
             'X' => match opp {
                 Shape::Rock => Shape::Scissors,
                 Shape::Paper => Shape::Rock,
@@ -90,7 +90,7 @@ impl Instruction {
                 Shape::Paper => Shape::Scissors,
                 Shape::Scissors => Shape::Rock,
             },
-            _ => panic!("unknown letter {}", c),
+            _ => panic!("unknown letter {c}"),
         }
     }
 

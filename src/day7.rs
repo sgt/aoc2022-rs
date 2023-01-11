@@ -74,38 +74,38 @@ fn parse(input: &[String]) -> DirLink {
     root
 }
 
-fn total_size(dir: DirLink) -> usize {
+fn total_size(dir: &DirLink) -> usize {
     dir.borrow().files.values().sum::<usize>()
         + dir
             .borrow()
             .dirs
             .values()
-            .map(|x| total_size(Rc::clone(x)))
+            .map(|x| total_size(&Rc::clone(x)))
             .sum::<usize>()
 }
 
-fn all_dirs(dir: DirLink) -> Vec<DirLink> {
-    let mut result = vec![Rc::clone(&dir)];
+fn all_dirs(dir: &DirLink) -> Vec<DirLink> {
+    let mut result = vec![Rc::clone(dir)];
     for d in dir.borrow().dirs.values() {
-        result.append(&mut all_dirs(Rc::clone(d)));
+        result.append(&mut all_dirs(&Rc::clone(d)));
     }
     result
 }
 
 pub fn solution1(data: &[String]) -> usize {
     let root = parse(data);
-    all_dirs(root)
+    all_dirs(&root)
         .iter()
-        .map(|x| total_size(Rc::clone(x)))
+        .map(|x| total_size(&Rc::clone(x)))
         .filter(|x| *x <= 100_000)
         .sum()
 }
 
 pub fn solution2(data: &[String]) -> usize {
     let root = parse(data);
-    let dir_sizes: Vec<_> = all_dirs(root)
+    let dir_sizes: Vec<_> = all_dirs(&root)
         .iter()
-        .map(|x| total_size(Rc::clone(x)))
+        .map(|x| total_size(&Rc::clone(x)))
         .collect();
     let target_space = 70_000_000 - 30_000_000;
     let amount_to_remove = dir_sizes.iter().max().unwrap() - target_space;
@@ -150,11 +150,11 @@ $ ls
 
     #[test]
     fn test_solution1() {
-        assert_eq!(95437, day7::solution1(&data()))
+        assert_eq!(95437, day7::solution1(&data()));
     }
 
     #[test]
     fn test_solution2() {
-        assert_eq!(24933642, day7::solution2(&data()))
+        assert_eq!(24_933_642, day7::solution2(&data()));
     }
 }

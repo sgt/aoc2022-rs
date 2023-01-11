@@ -7,7 +7,7 @@ struct Backpack {
 
 impl Backpack {
     fn str2items(s: &str) -> HashSet<u8> {
-        HashSet::from_iter(s.bytes())
+        s.bytes().collect()
     }
 
     fn parse(s: &str) -> Self {
@@ -33,7 +33,7 @@ impl Backpack {
     fn total_common_priorities(&self) -> i32 {
         self.common_items()
             .iter()
-            .map(|x| Self::priority(*x) as i32)
+            .map(|x| i32::from(Self::priority(*x)))
             .sum()
     }
 }

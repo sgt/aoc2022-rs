@@ -11,7 +11,7 @@ pub fn solution1(data: &[String]) -> i32 {
 
 pub fn solution2(data: &[String]) -> i32 {
     let mut totals = elf_totals(data);
-    totals.sort();
+    totals.sort_unstable();
     totals.reverse();
     totals.iter().take(3).sum()
 }

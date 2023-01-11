@@ -1,4 +1,6 @@
+#![warn(clippy::pedantic)]
 use clap::{command, Parser};
+use color_eyre::eyre::Result;
 use solution::Solution;
 
 mod common;
@@ -9,6 +11,7 @@ mod day12;
 mod day13;
 mod day14;
 mod day15;
+mod day16;
 mod day2;
 mod day3;
 mod day4;
@@ -18,6 +21,7 @@ mod day7;
 mod day8;
 mod day9;
 mod solution;
+
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -33,7 +37,11 @@ impl Args {
     }
 }
 
-fn main() {
+fn main() -> Result<()> {
+    color_eyre::install()?;
+
     let args = Args::parse();
     println!("{}", args.solution().solve());
+
+    Ok(())
 }

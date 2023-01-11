@@ -18,7 +18,7 @@ impl Coords {
         }
     }
 
-    fn move_tail(&mut self, head: &Coords) {
+    fn move_tail(&mut self, head: Coords) {
         let x_diff = head.0 - self.0;
         let y_diff = head.1 - self.1;
         if x_diff.abs() <= 1 && y_diff.abs() <= 1 {
@@ -32,14 +32,14 @@ impl Coords {
 fn parse(data: &[String]) -> Vec<Command> {
     data.iter()
         .map(|x| {
-            let spl: Vec<_> = x.split(' ').collect();
-            let n = spl[1].parse().unwrap();
-            match spl[0] {
+            let (cmd, n) = x.split_once(' ').unwrap();
+            let n = n.parse().unwrap();
+            match cmd {
                 "U" => Command(Axis::Y, n),
                 "D" => Command(Axis::Y, -n),
                 "L" => Command(Axis::X, -n),
                 "R" => Command(Axis::X, n),
-                _ => panic!("unknown command '{}'", spl[0]),
+                _ => panic!("unknown command '{cmd}'"),
             }
         })
         .collect()
@@ -56,8 +56,8 @@ fn tail_visited<const N: usize>(commands: &[Command]) -> HashSet<Coords> {
                 if i == 0 {
                     rope[i].step(cmd);
                 } else {
-                    let prev = rope[i-1];
-                    rope[i].move_tail(&prev);
+                    let prev = rope[i - 1];
+                    rope[i].move_tail(prev);
                 }
                 if i == rope.len() - 1 {
                     result.insert(rope[i]);

@@ -76,7 +76,7 @@ impl<const V: u64> Monkey<V> {
         match s {
             "*" => WorryOp::Mul,
             "+" => WorryOp::Add,
-            _ => panic!("unknown op '{}'", s),
+            _ => panic!("unknown op '{s}'"),
         }
     }
 
@@ -115,7 +115,7 @@ impl<const V: u64> Monkey<V> {
         }
     }
 
-    /// Return a list of (monkey_idx, item_to_throw).
+    /// Return a list of (`monkey_idx`, `item_to_throw`).
     fn turn_results(&self, divisors_lcm: u64) -> Vec<(usize, u64)> {
         self.items
             .iter()
@@ -159,7 +159,7 @@ impl<const V: u64> Monkeys<V> {
 }
 
 fn parse<const V: u64>(input: &[String]) -> Monkeys<V> {
-    let monkey_data: Vec<_> = input.split(|x| x.is_empty()).collect();
+    let monkey_data: Vec<_> = input.split(String::is_empty).collect();
     let mut result = Vec::with_capacity(monkey_data.len());
     for md in monkey_data {
         let (idx, monkey) = Monkey::parse(md);
@@ -180,7 +180,7 @@ pub fn solution<const V: u64>(data: &[String], rounds: usize) -> usize {
             .collect();
     }
 
-    result.sort();
+    result.sort_unstable();
     result.reverse();
     result[0] * result[1]
 }
@@ -236,6 +236,6 @@ Monkey 3:
 
     #[test]
     fn test_solution2() {
-        assert_eq!(2713310158, day11::solution2(&data()));
+        assert_eq!(2_713_310_158, day11::solution2(&data()));
     }
 }

@@ -5,7 +5,7 @@ pub(crate) fn vec_of_nums(v: &[String]) -> Vec<i32> {
 }
 
 pub(crate) fn int_groups_data(data: &[String]) -> Vec<Vec<i32>> {
-    data.split(|v| v.is_empty()).map(vec_of_nums).collect()
+    data.split(String::is_empty).map(vec_of_nums).collect()
 }
 
 #[cfg(test)]

@@ -5,7 +5,7 @@ enum Op {
 }
 
 impl Op {
-    fn cycles(&self) -> u8 {
+    fn cycles(self) -> u8 {
         match self {
             Op::AddX(_) => 2,
             Op::Noop => 1,
@@ -71,7 +71,7 @@ fn parse(data: &[String]) -> Vec<Op> {
     data.iter()
         .map(|x| {
             let spl: Vec<_> = x.split(' ').collect();
-            match spl[0] {
+            match *spl.first().unwrap() {
                 "addx" => Op::AddX(spl[1].parse().unwrap()),
                 "noop" => Op::Noop,
                 _ => panic!("unknown command '{}'", spl[0]),
@@ -127,6 +127,7 @@ noop"#,
         )
     }
 
+    #[allow(clippy::too_many_lines)]
     fn data2() -> Vec<String> {
         str2lines(
             r#"addx 15

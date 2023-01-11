@@ -32,7 +32,7 @@ impl Crates {
         let mut crates = Self(Vec::new());
 
         for _ in 0..ncol {
-            crates.0.push(Vec::new())
+            crates.0.push(Vec::new());
         }
 
         for s in iter {
@@ -66,7 +66,7 @@ impl Crates {
 }
 
 fn parse_input(data: &[String]) -> (Crates, Vec<Instruction>) {
-    let chunks: Vec<_> = data.split(|x| x.is_empty()).collect();
+    let chunks: Vec<_> = data.split(String::is_empty).collect();
     (
         Crates::parse(chunks[0]),
         chunks[1].iter().map(|x| Instruction::parse(x)).collect(),

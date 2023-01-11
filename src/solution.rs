@@ -3,7 +3,13 @@ use std::io::BufRead;
 use std::io::BufReader;
 
 use crate::day1;
+use crate::day10;
+use crate::day11;
+use crate::day12;
+use crate::day13;
+use crate::day14;
 use crate::day15;
+use crate::day16;
 use crate::day2;
 use crate::day3;
 use crate::day4;
@@ -12,11 +18,6 @@ use crate::day6;
 use crate::day7;
 use crate::day8;
 use crate::day9;
-use crate::day10;
-use crate::day11;
-use crate::day12;
-use crate::day13;
-use crate::day14;
 
 pub struct Solution {
     day: u8,
@@ -34,7 +35,7 @@ impl Solution {
 
     fn read_input(&self) -> Vec<String> {
         let file = File::open(self.input_filename()).expect("no such file");
-        BufReader::new(file).lines().map(|l| l.unwrap()).collect()
+        BufReader::new(file).lines().map(Result::unwrap).collect()
     }
 
     pub fn solve(&self) -> String {
@@ -72,6 +73,8 @@ impl Solution {
             Self { day: 14, part: 2 } => day14::solution2(&input).to_string(),
             Self { day: 15, part: 1 } => day15::solution1(&input).to_string(),
             Self { day: 15, part: 2 } => day15::solution2(&input).to_string(),
+            Self { day: 16, part: 1 } => day16::solution1(&input).to_string(),
+            Self { day: 16, part: 2 } => day16::solution2(&input).to_string(),
             _ => unimplemented!("this solution does not exist yet"),
         }
     }

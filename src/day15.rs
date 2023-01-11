@@ -1,3 +1,4 @@
+#![allow(clippy::range_plus_one)]
 use std::ops::{Bound, Range, RangeBounds};
 
 use lazy_static::lazy_static;
@@ -17,10 +18,11 @@ impl Sensor {
         Self {
             pos,
             beacon,
-            distance: distance(&pos, &beacon),
+            distance: distance(pos, beacon),
         }
     }
 
+    #[allow(clippy::cast_possible_wrap)]
     #[inline]
     fn covered_x(&self, y: i32) -> Range<i32> {
         let y_dist = y.abs_diff(self.pos.1);
@@ -68,7 +70,7 @@ impl Grid {
     }
 }
 
-fn distance(p1: &Pos, p2: &Pos) -> u32 {
+fn distance(p1: Pos, p2: Pos) -> u32 {
     p1.0.abs_diff(p2.0) + p1.1.abs_diff(p2.1)
 }
 
@@ -85,9 +87,9 @@ fn parse(input: &[String]) -> Grid {
             sensors.push(Sensor::new(
                 (cap[1].parse().unwrap(), cap[2].parse().unwrap()),
                 (cap[3].parse().unwrap(), cap[4].parse().unwrap()),
-            ))
+            ));
         } else {
-            panic!("cannot parse line '{}'", line);
+            panic!("cannot parse line '{line}'");
         }
     }
     Grid { sensors }
@@ -117,13 +119,12 @@ pub fn solve2(input: &[String], boundary: Range<i32>) -> Option<i64> {
             let r = x.as_slice()[0];
             if r.is_singleton() {
                 return if let Bound::Included(v) = r.start_bound() {
-                    Some(*v as i64 * 4000000 + y as i64)
+                    Some(i64::from(*v) * 4_000_000 + i64::from(y))
                 } else {
                     None
                 };
-            } else {
-                return None;
             }
+            return None;
         }
     }
     None
@@ -186,6 +187,6 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3"#,
 
     #[test]
     fn test_solution2() {
-        assert_eq!(56000011, day15::solve2(&data(), 0..21).unwrap());
+        assert_eq!(56_000_011, day15::solve2(&data(), 0..21).unwrap());
     }
 }

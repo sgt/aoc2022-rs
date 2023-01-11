@@ -1,9 +1,9 @@
 fn find_n_unique(n: usize, s: &str) -> Option<usize> {
-    let mut sofar: String = "".into();
+    let mut sofar: String = String::new();
 
     for (i, c) in s.chars().enumerate() {
         if let Some(x) = sofar.find(c) {
-            sofar.drain(..x + 1);
+            sofar.drain(..=x);
         }
         sofar.push(c);
         if sofar.len() == n {

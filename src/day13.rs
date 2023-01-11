@@ -5,7 +5,7 @@ use json::JsonValue;
 type DataPair = (JsonValue, JsonValue);
 
 fn parse(data: &[String]) -> Vec<DataPair> {
-    data.split(|x| x.is_empty())
+    data.split(String::is_empty)
         .map(|v| {
             v.iter()
                 .map(|x| json::parse(x).unwrap())
@@ -42,7 +42,7 @@ fn compare(v1: &JsonValue, v2: &JsonValue) -> Ordering {
     } else if v1.is_array() && v2.is_number() {
         compare(v1, &JsonValue::Array(vec![v2.clone()]))
     } else {
-        panic!("unexpected case: {} {}", v1, v2)
+        panic!("unexpected case: {v1} {v2}")
     }
 }
 
