@@ -118,8 +118,8 @@ pub fn solve2(input: &[String], boundary: Range<i32>) -> Option<i64> {
         if x.len() == 1 {
             let r = x.as_slice()[0];
             if r.is_singleton() {
-                return if let Bound::Included(v) = r.start_bound() {
-                    Some(i64::from(*v) * 4_000_000 + i64::from(y))
+                return if let Bound::Included(&v) = r.start_bound() {
+                    Some(i64::from(v) * 4_000_000 + i64::from(y))
                 } else {
                     None
                 };

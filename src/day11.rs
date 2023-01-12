@@ -119,7 +119,7 @@ impl<const V: u64> Monkey<V> {
     fn turn_results(&self, divisors_lcm: u64) -> Vec<(usize, u64)> {
         self.items
             .iter()
-            .map(|x| self.worry_op(*x % divisors_lcm))
+            .map(|&x| self.worry_op(x % divisors_lcm))
             .map(|x| (self.throw_op(x), x))
             .collect()
     }

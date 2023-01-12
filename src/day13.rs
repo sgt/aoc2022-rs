@@ -51,7 +51,7 @@ pub fn solution1(input: &[String]) -> usize {
         .iter()
         .map(|(a, b)| compare(a, b))
         .enumerate()
-        .filter(|(_, x)| *x == Ordering::Less)
+        .filter(|&(_, x)| x == Ordering::Less)
         .map(|(i, _)| i + 1)
         .sum()
 }

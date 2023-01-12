@@ -29,7 +29,7 @@ impl From<&str> for Name {
 impl<T: PartialOrd + Eq + Hash + Copy + Default> Network<T> {
     pub fn new(edges: HashSet<(T, T)>, pressures: HashMap<T, u32>) -> Self {
         // not interested in zero pressures
-        let pressures: HashMap<_, _> = pressures.into_iter().filter(|(_, v)| *v > 0).collect();
+        let pressures: HashMap<_, _> = pressures.into_iter().filter(|&(_, v)| v > 0).collect();
         Self {
             edges,
             valves: pressures,

@@ -97,7 +97,7 @@ pub fn solution1(data: &[String]) -> usize {
     all_dirs(&root)
         .iter()
         .map(|x| total_size(&Rc::clone(x)))
-        .filter(|x| *x <= 100_000)
+        .filter(|&x| x <= 100_000)
         .sum()
 }
 
@@ -109,9 +109,9 @@ pub fn solution2(data: &[String]) -> usize {
         .collect();
     let target_space = 70_000_000 - 30_000_000;
     let amount_to_remove = dir_sizes.iter().max().unwrap() - target_space;
-    *dir_sizes
-        .iter()
-        .filter(|x| **x >= amount_to_remove)
+    dir_sizes
+        .into_iter()
+        .filter(|&x| x >= amount_to_remove)
         .min()
         .unwrap()
 }

@@ -6,7 +6,7 @@ fn elf_totals(data: &[String]) -> Vec<i32> {
 }
 
 pub fn solution1(data: &[String]) -> i32 {
-    *elf_totals(data).iter().max().unwrap()
+    elf_totals(data).into_iter().max().unwrap()
 }
 
 pub fn solution2(data: &[String]) -> i32 {

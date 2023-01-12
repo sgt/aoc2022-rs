@@ -53,9 +53,8 @@ impl Grid {
     fn successors(&self, pos: Pos) -> Vec<(Pos, usize)> {
         let cur = self.get(pos);
         self.neighbours(pos)
-            .iter()
-            .filter(|p| self.get(**p) <= cur + 1)
-            .copied()
+            .into_iter()
+            .filter(|&p| self.get(p) <= cur + 1)
             .map(|x| (x, 1))
             .collect()
     }
@@ -72,7 +71,7 @@ impl Grid {
 fn find_all(g: &[Vec<u8>], x: u8) -> Vec<Pos> {
     let mut result = vec![];
     for (y, row) in g.iter().enumerate() {
-        if let Some(x) = row.iter().position(|c| *c == x) {
+        if let Some(x) = row.iter().position(|&c| c == x) {
             result.push((x, y));
         }
     }
@@ -83,9 +82,9 @@ pub fn solution1(data: &[String]) -> usize {
     let grid = Grid::new(data);
     let (_path, distance) = astar(
         &grid.start,
-        |p| grid.successors(*p),
-        |p| grid.dist_to_end(*p),
-        |p| *p == grid.end,
+        |&p| grid.successors(p),
+        |&p| grid.dist_to_end(p),
+        |&p| p == grid.end,
     )
     .unwrap();
     distance
@@ -98,9 +97,9 @@ pub fn solution2(data: &[String]) -> usize {
         .filter_map(|p| {
             astar(
                 p,
-                |p| grid.successors(*p),
-                |p| grid.dist_to_end(*p),
-                |p| *p == grid.end,
+                |&p| grid.successors(p),
+                |&p| grid.dist_to_end(p),
+                |&p| p == grid.end,
             )
         })
         .map(|x| x.1)
