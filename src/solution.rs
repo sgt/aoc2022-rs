@@ -10,6 +10,7 @@ use crate::day13;
 use crate::day14;
 use crate::day15;
 use crate::day16;
+use crate::day17;
 use crate::day2;
 use crate::day3;
 use crate::day4;
@@ -75,6 +76,8 @@ impl Solution {
             Self { day: 15, part: 2 } => day15::solution2(&input).to_string(),
             Self { day: 16, part: 1 } => day16::solution1(&input).to_string(),
             Self { day: 16, part: 2 } => day16::solution2(&input).to_string(),
+            Self { day: 17, part: 1 } => day17::solution1(&input).to_string(),
+            Self { day: 17, part: 2 } => day17::solution2(&input).to_string(),
             _ => unimplemented!("this solution does not exist yet"),
         }
     }

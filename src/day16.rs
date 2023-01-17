@@ -91,10 +91,9 @@ impl<T: PartialOrd + Eq + Hash + Copy + Display + std::fmt::Debug + Default> Net
         &self,
         path_so_far: Path<T>,
         minutes: u32,
-        ignore_valves: &HashSet<T>,
+        eligible_valves: &[T],
     ) -> Vec<Path<T>> {
-        let eligible_valves = &(&self.nonzero_valves - ignore_valves) - &path_so_far.opened_valves;
-        let valves_to_explore: HashSet<_> = eligible_valves
+        let valves_to_explore: Vec<_> = eligible_valves
             .iter()
             .copied()
             .filter(|&v| {
@@ -128,18 +127,26 @@ impl<T: PartialOrd + Eq + Hash + Copy + Display + std::fmt::Debug + Default> Net
                     next_path.released_pressure += path_so_far.pressure_per_minute * minutes_added;
                     next_path.minutes_passed += minutes_added;
 
-                    self.all_paths_from(next_path, minutes - minutes_added, ignore_valves)
+                    self.all_paths_from(
+                        next_path,
+                        minutes - minutes_added,
+                        &valves_to_explore
+                            .iter()
+                            .copied()
+                            .filter(|&x| x != next_valve)
+                            .collect::<Vec<_>>(),
+                    )
                 })
                 .collect()
         }
     }
 
-    pub fn all_paths(&self, start: T, minutes: u32, ignore_valves: &HashSet<T>) -> Vec<Path<T>> {
+    pub fn all_paths(&self, start: T, minutes: u32, eligible_valves: &[T]) -> Vec<Path<T>> {
         let init_path = Path {
             current_valve: start,
             ..Path::default()
         };
-        self.all_paths_from(init_path, minutes, ignore_valves)
+        self.all_paths_from(init_path, minutes, eligible_valves)
     }
 }
 
@@ -172,13 +179,22 @@ fn max_pressure<T>(paths: &[Path<T>]) -> u32 {
 }
 
 pub fn solution1(input: &[String]) -> u32 {
-    let paths = parse(input).all_paths("AA".into(), 30, &HashSet::default());
+    let network = parse(input);
+    let paths = network.all_paths(
+        "AA".into(),
+        30,
+        &network.nonzero_valves.iter().copied().collect::<Vec<_>>(),
+    );
     max_pressure(&paths)
 }
 
 pub fn solution2(input: &[String]) -> u32 {
     let network = parse(input);
-    let paths = network.all_paths("AA".into(), 26, &HashSet::default());
+    let paths = network.all_paths(
+        "AA".into(),
+        26,
+        &network.nonzero_valves.iter().copied().collect::<Vec<_>>(),
+    );
     let best_paths = paths
         .iter()
         .group_by(|x| x.opened_valves.clone())
@@ -189,7 +205,13 @@ pub fn solution2(input: &[String]) -> u32 {
     best_paths
         .par_iter()
         .map(|(vs, p1)| {
-            let p2s = network.all_paths("AA".into(), 26, vs);
+            let p2s = network.all_paths(
+                "AA".into(),
+                26,
+                &(&network.nonzero_valves - vs)
+                    .into_iter()
+                    .collect::<Vec<_>>(),
+            );
             p1 + max_pressure(&p2s)
         })
         .max()
