@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+use std::io::{self,Write};
 use std::{cmp::max, collections::HashSet, fmt::Display};
 
 type Pos = (isize, isize);
@@ -80,7 +81,7 @@ impl Chamber {
         shape
             .0
             .iter()
-            .any(|pos @ &(x, y)| x < 0 || x > self.width || y < 0 || self.rocks.contains(pos))
+            .any(|pos @ &(x, y)| x < 0 || x >= self.width || y < 0 || self.rocks.contains(pos))
     }
 
     fn add_shape(&mut self, shape: &Shape) {
@@ -88,6 +89,15 @@ impl Chamber {
             self.rocks.insert(pos);
         }
         self.height = max(self.height, shape.max_y() + 1);
+
+        // prune
+        if self.height % 10 == 0 {
+            for p in self.rocks.clone() {
+                if p.1 < self.height - 10 {
+                    self.rocks.remove(&p);
+                }
+            }
+        }
     }
 }
 
@@ -117,7 +127,13 @@ impl Display for Chamber {
 fn play(instructions: &[Dir], n: usize) -> Chamber {
     let mut chamber = Chamber::new(7);
     let mut instructions_iter = instructions.iter().cycle();
+    let mut cnt: isize = 0;
     for mut shape in SHAPES.iter().cycle().take(n).cloned() {
+        cnt += 1;
+        if cnt % 1_000_000 == 0 {
+            print!(".");
+            io::stdout().flush().unwrap();
+        }
         shape.set_height(chamber.height + 3);
         loop {
             let instruction = instructions_iter.next().unwrap();
@@ -155,14 +171,13 @@ pub fn solution1(input: &[String]) -> isize {
     play(&parse(input[0].as_str()), 2022).height
 }
 
-pub fn solution2(_input: &[String]) -> isize {
-    todo!()
+pub fn solution2(input: &[String]) -> isize {
+    play(&parse(input[0].as_str()), 1_000_000_000_000).height
 }
 
 #[cfg(test)]
 mod tests {
-
-    use super::{parse, solution1, Dir};
+    use crate::day17::{parse, Dir};
 
     fn data() -> Vec<String> {
         vec![">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>".into()]
@@ -175,6 +190,11 @@ mod tests {
 
     #[test]
     fn test_solution1() {
-        assert_eq!(3068, solution1(&data()));
+        assert_eq!(3068, super::solution1(&data()));
+    }
+
+    #[test]
+    fn test_solution2() {
+        assert_eq!(1_514_285_714_288, super::solution2(&data()));
     }
 }
