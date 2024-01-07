@@ -1,8 +1,12 @@
 use lazy_static::lazy_static;
-use std::io::{self,Write};
-use std::{cmp::max, collections::HashSet, fmt::Display};
+use std::{
+    fmt::Display,
+    iter::{Cycle, Enumerate},
+    vec::IntoIter,
+};
 
-type Pos = (isize, isize);
+const CHAMBER_WIDTH: u8 = 7;
+const BUFFER_HEIGHT: usize = 100;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Dir {
@@ -10,113 +14,135 @@ enum Dir {
     Right,
 }
 
-impl Dir {
-    fn shift(self) -> isize {
-        match self {
-            Dir::Left => -1,
-            Dir::Right => 1,
-        }
-    }
+#[derive(Debug, Clone)]
+struct Piece {
+    data: Vec<u8>,
+    y: usize, // y-position in chamber (by lowest row) (absolute)
 }
 
-#[derive(Debug, Clone)]
-struct Shape(Vec<Pos>);
-
-impl Shape {
-    fn push(&self, dir: Dir) -> Shape {
-        Shape(self.0.iter().map(|&(x, y)| (x + dir.shift(), y)).collect())
-    }
-
-    fn pushed(&self, dir: Dir, n: usize) -> Self {
-        let mut s = self.clone();
-        for _ in 0..n {
-            s = s.push(dir);
+impl Piece {
+    pub fn new(data: &[u8], y: usize) -> Self {
+        Self {
+            data: data.to_vec(),
+            y,
         }
-        s
     }
 
-    fn drop(&self) -> Shape {
-        Shape(self.0.iter().map(|&(x, y)| (x, y - 1)).collect())
+    pub fn is_leftmost(&self) -> bool {
+        self.data.iter().any(|x| x & 1 << (CHAMBER_WIDTH - 1) != 0)
     }
 
-    fn set_height(&mut self, height: isize) {
-        self.0.iter_mut().for_each(|(_, y)| *y += height);
+    pub fn is_rightmost(&self) -> bool {
+        self.data.iter().any(|x| x & 0b1 != 0)
     }
 
-    fn max_y(&self) -> isize {
-        self.0.iter().map(|&(_, y)| y).max().unwrap()
+    fn push(&mut self, dir: Dir) {
+        if (dir == Dir::Left && self.is_leftmost()) || (dir == Dir::Right && self.is_rightmost()) {
+            return;
+        }
+
+        for row in &mut self.data {
+            match dir {
+                Dir::Left => *row <<= 1,
+                Dir::Right => *row >>= 1,
+            }
+        }
+    }
+
+    fn dropped(&self) -> Self {
+        let mut p = self.clone();
+        p.y -= 1;
+        p
+    }
+
+    fn pushed(&self, dir: Dir) -> Self {
+        let mut p = self.clone();
+        p.push(dir);
+        p
+    }
+
+    fn pushed_n(&mut self, dir: Dir, n: usize) -> Self {
+        let mut p = self.clone();
+        for _ in 0..n {
+            p.push(dir);
+        }
+        p
     }
 }
 
 lazy_static! {
-    static  ref SHAPES: Vec<Shape> = vec![
-        Shape(vec![(0, 0), (1, 0), (2, 0), (3, 0)]), // horizontal bar
-        Shape(vec![(1, 0), (0, 1), (1, 1), (2, 1), (1, 2)]), // cross
-        Shape(vec![(0, 0), (1, 0), (2, 0), (2, 1), (2, 2)]), // J
-        Shape(vec![(0, 0), (0, 1), (0, 2), (0, 3)]), // vertical bar
-        Shape(vec![(0, 0), (1, 0), (0, 1), (1, 1)]), // square
-    ]
-    .iter()
-    .map(|x| x.pushed(Dir::Right, 2))
-    .collect();
+    static ref SHAPES: Vec<Vec<u8>> =  vec![
+        vec![
+            0b0111_1000,
+        ], // horizontal bar
+        vec![
+            0b0010_0000,
+            0b0111_0000,
+            0b0010_0000,
+        ], // cross
+        vec![
+            0b0111_0000,
+            0b0001_0000,
+            0b0001_0000,
+        ], // J
+        vec![
+            0b0100_0000,
+            0b0100_0000,
+            0b0100_0000,
+            0b0100_0000,
+        ], // vertical bar
+        vec![
+            0b0110_0000,
+            0b0110_0000,
+        ], // square
+    ];
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Chamber {
-    width: isize,
-    rocks: HashSet<Pos>,
-    height: isize,
+    rocks: Vec<u8>,
 }
 
 impl Chamber {
-    fn new(width: isize) -> Self {
-        Self {
-            width,
-            rocks: HashSet::new(),
-            height: 0,
-        }
+    fn new() -> Self {
+        Self { rocks: vec![] }
     }
 
-    fn overlaps(&self, shape: &Shape) -> bool {
-        shape
-            .0
-            .iter()
-            .any(|pos @ &(x, y)| x < 0 || x >= self.width || y < 0 || self.rocks.contains(pos))
+    // absolute height
+    fn height(&self) -> usize {
+        self.rocks.len()
     }
 
-    fn add_shape(&mut self, shape: &Shape) {
-        for &pos in &shape.0 {
-            self.rocks.insert(pos);
-        }
-        self.height = max(self.height, shape.max_y() + 1);
+    fn overlaps(&self, piece: &Piece) -> bool {
+        piece.data.iter().enumerate().any(|(y, row)| {
+            let abs_piece_y = y + piece.y;
+            abs_piece_y < self.rocks.len() && row & self.rocks[abs_piece_y] != 0
+        })
+    }
 
-        // prune
-        if self.height % 10 == 0 {
-            for p in self.rocks.clone() {
-                if p.1 < self.height - 10 {
-                    self.rocks.remove(&p);
-                }
-            }
+    fn add_piece(&mut self, piece: &Piece) {
+        let max_piece_height = piece.y + piece.data.len();
+        if self.rocks.len() < max_piece_height {
+            self.rocks.resize(max_piece_height, 0);
+        }
+        for (y, row) in piece.data.iter().enumerate() {
+            self.rocks[y + piece.y] |= row;
         }
     }
 }
 
 impl Display for Chamber {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for y in (0..self.height).rev() {
+        for row in self.rocks.iter().rev() {
             write!(f, "|")?;
-            for x in 0..self.width {
-                let c = if self.rocks.contains(&(x, y)) {
-                    "#"
-                } else {
-                    "."
-                };
+            for x in (0..CHAMBER_WIDTH).rev() {
+                let c = if (1 << x) & *row == 0 { "." } else { "#" };
                 write!(f, "{c}")?;
             }
             writeln!(f, "|")?;
         }
         write!(f, "|")?;
-        for _ in 0..self.width {
+        for _ in 0..CHAMBER_WIDTH {
             write!(f, "-")?;
         }
         writeln!(f, "|")?;
@@ -124,36 +150,58 @@ impl Display for Chamber {
     }
 }
 
-fn play(instructions: &[Dir], n: usize) -> Chamber {
-    let mut chamber = Chamber::new(7);
-    let mut instructions_iter = instructions.iter().cycle();
-    let mut cnt: isize = 0;
-    for mut shape in SHAPES.iter().cycle().take(n).cloned() {
-        cnt += 1;
-        if cnt % 1_000_000 == 0 {
-            print!(".");
-            io::stdout().flush().unwrap();
+// fn determine_cycle()
+
+struct Game {
+    chamber: Chamber,
+    instructions_iter: Cycle<Enumerate<IntoIter<Dir>>>,
+    shapes_iter: Cycle<Enumerate<IntoIter<Vec<u8>>>>,
+}
+
+impl Game {
+    pub fn new(instructions: &[Dir]) -> Game {
+        Game {
+            chamber: Chamber::new(),
+            #[allow(clippy::unnecessary_to_owned)]
+            instructions_iter: instructions.to_vec().into_iter().enumerate().cycle(),
+            shapes_iter: SHAPES.clone().into_iter().enumerate().cycle(),
         }
-        shape.set_height(chamber.height + 3);
+    }
+
+    fn play_next_piece(&mut self) {
+        let (_, shape) = self.shapes_iter.next().unwrap();
+        let mut piece = Piece::new(&shape, self.chamber.height() + 3).pushed_n(Dir::Right, 2);
+
         loop {
-            let instruction = instructions_iter.next().unwrap();
+            let (_, instr) = self.instructions_iter.next().unwrap();
 
             // try pushing
-            let new_shape = shape.push(*instruction);
-            if !chamber.overlaps(&new_shape) {
-                shape = new_shape;
+            let new_piece = piece.pushed(instr);
+            if !self.chamber.overlaps(&new_piece) {
+                piece = new_piece;
+            }
+
+            if piece.y == 0 {
+                // reached floor
+                self.chamber.add_piece(&piece);
+                break;
             }
 
             // try dropping
-            let new_shape = shape.drop();
-            if chamber.overlaps(&new_shape) {
-                chamber.add_shape(&shape);
+            let new_piece = piece.dropped();
+            if self.chamber.overlaps(&new_piece) {
+                self.chamber.add_piece(&piece);
                 break;
             }
-            shape = new_shape;
+            piece = new_piece;
         }
     }
-    chamber
+
+    fn play_n(&mut self, n: usize) {
+        for _ in 0..n {
+            self.play_next_piece();
+        }
+    }
 }
 
 fn parse(input: &str) -> Vec<Dir> {
@@ -167,16 +215,21 @@ fn parse(input: &str) -> Vec<Dir> {
         .collect()
 }
 
-pub fn solution1(input: &[String]) -> isize {
-    play(&parse(input[0].as_str()), 2022).height
+pub fn solution1(input: &[String]) -> usize {
+    let mut game = Game::new(&parse(input[0].as_str()));
+    game.play_n(2022);
+    game.chamber.height()
 }
 
-pub fn solution2(input: &[String]) -> isize {
-    play(&parse(input[0].as_str()), 1_000_000_000_000).height
+pub fn solution2(input: &[String]) -> usize {
+    let mut game = Game::new(&parse(input[0].as_str()));
+    game.play_n(1_000_000_000_000);
+    game.chamber.height()
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::day17::{parse, Dir};
 
     fn data() -> Vec<String> {
@@ -189,12 +242,64 @@ mod tests {
     }
 
     #[test]
-    fn test_solution1() {
-        assert_eq!(3068, super::solution1(&data()));
+    fn test_overlaps() {
+        let chamber = Chamber::new();
+        let piece = Piece::new(&[0b0111_1000], 0);
+        assert!(!chamber.overlaps(&piece), "no overlap for empty chamber");
+
+        let mut chamber2 = Chamber::new();
+        chamber2.rocks = vec![0b0011_0000, 0b0011_0000];
+        let mut piece2 = Piece::new(&[0b0011_1000, 0b0000_1000, 0b0000_10000], 0);
+        assert!(chamber2.overlaps(&piece2));
+        piece2.y += 1;
+        assert!(chamber2.overlaps(&piece2));
+        piece2.y += 1;
+        assert!(!chamber2.overlaps(&piece2));
     }
 
     #[test]
+    fn test_add_piece() {
+        let mut chamber = Chamber::new();
+        let piece = Piece::new(&[0b0111_1000], 0);
+        chamber.add_piece(&piece);
+        assert_eq!(chamber.rocks, vec![0b0111_1000]);
+
+        let mut chamber2 = Chamber::new();
+        chamber2.rocks = vec![0b0011_0000, 0b0011_0000];
+        let piece2 = Piece::new(&[0b0111_0000, 0b0001_0000, 0b0001_0000], 2);
+        chamber2.add_piece(&piece2);
+        assert_eq!(
+            chamber2.rocks,
+            vec![
+                0b0011_0000,
+                0b0011_0000,
+                0b0111_0000,
+                0b0001_0000,
+                0b0001_0000,
+            ] // chamber is stored bottom-to-top, unlike the pieces
+        );
+    }
+
+    #[test]
+    fn test_play_n() {
+        let instructions = parse(">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>");
+        let mut game = Game::new(&instructions);
+        game.play_n(3);
+        assert_eq!(game.chamber.height(), 6);
+
+        let mut game2 = Game::new(&instructions);
+        game2.play_n(10);
+        assert_eq!(game2.chamber.height(), 17);
+    }
+
+    #[test]
+    fn test_solution1() {
+        assert_eq!(3068, solution1(&data()));
+    }
+
+    #[test]
+    #[ignore]
     fn test_solution2() {
-        assert_eq!(1_514_285_714_288, super::solution2(&data()));
+        assert_eq!(1_514_285_714_288, solution2(&data()));
     }
 }

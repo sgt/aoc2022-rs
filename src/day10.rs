@@ -94,7 +94,6 @@ pub fn solution2(data: &[String]) -> String {
     let program = parse(data);
     let mut device = Device::new(&program);
     (0..240)
-        .into_iter()
         .map(|_| {
             let result = if device.is_pixel_drawn() {
                 '#'
